@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
 using System.Reflection;
 using System.Text;
+using TestProj_ABP_Backend.DbContext;
 
 namespace TestProj_ABP_Backend;
 public class Program
@@ -18,23 +17,14 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllers();
-        builder.Services.AddDbContext<PictureNetworkDbContext>(options =>
-            options.UseSqlServer(builder.Configuration["DbConnectionString"]));
-
-        builder.Services.AddScoped<IVirusScanner, WindowsEmbededVirusScanner>();
-        builder.Services.AddScoped<IPhotoConverter, SimplePhotoConverter>();
+        builder.Services.AddDbContext<MyDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+        builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
-            options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
-            {
-                In = ParameterLocation.Header,
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey
-            });
-            options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Version = "v1",
@@ -56,33 +46,6 @@ public class Program
             //using System.Reflection;
             var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-        });
-
-        builder.Services.AddAuthentication(x =>
-        {
-            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(x =>
-        {
-            x.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-                ValidAudience = builder.Configuration["JwtSettings:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                    builder.Configuration["JwtSettings:Key"])),
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-
-            };
-        });
-
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy(IdentityData.AdminUserPolicyName, p =>
-                p.RequireClaim(IdentityData.AdminUserClaimName, "true"));
         });
 
         var app = builder.Build();
@@ -109,10 +72,6 @@ public class Program
 
         app.UseRouting();
         app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-
-
-        app.UseAuthentication();
-        app.UseAuthorization();
 
         app.MapControllers();
 
