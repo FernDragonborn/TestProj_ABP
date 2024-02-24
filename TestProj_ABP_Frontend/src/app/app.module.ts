@@ -5,6 +5,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ProductsComponent } from './components/products/products.component';
+import { FingerprintService } from './services/fingerprint-service.service';
 
 @NgModule({
   declarations: [
@@ -14,9 +15,9 @@ import { ProductsComponent } from './components/products/products.component';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    NgbModule,
+    NgbModule
   ],
-  providers: [],
+  providers: [FingerprintService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
