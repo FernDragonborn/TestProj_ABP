@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TestProj_ABP_Backend.AB_Tests;
+using TestProj_ABP_Backend.DTOs;
 using TestProj_ABP_Backend.Services;
 
 namespace TestProj_ABP_Backend.Controllers;
@@ -7,6 +9,12 @@ namespace TestProj_ABP_Backend.Controllers;
 [ApiController]
 public class UserController : ControllerBase
 {
+    IConfiguration _configuration;
+    UserController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     /// <summary>
     /// Get
     /// </summary>
@@ -17,12 +25,29 @@ public class UserController : ControllerBase
     [HttpGet("button-color")]
     public IActionResult ButtonColor([FromQuery(Name = "device-token")] string? DeviceToken)
     {
-        if (!string.IsNullOrWhiteSpace(DeviceToken))
+        DeviceToken = DeviceToken.Trim();
+        Result<string> strResult = ColorTest.GetColor(DeviceToken, _configuration);
+
+        if (strResult.IsSuccess == false)
         {
-            return Ok(new[] { "value1", "value2" });
+            var user = UserService.RegisterUser(_configuration);
+            DeviceToken = user.DeviceToken;
+
+            //if user was regitered, so it's in DB and result would be positive in any outcome
+            ColorTest.AssignColor(DeviceToken, _configuration);
+            strResult = ColorTest.GetColor(DeviceToken, _configuration);
         }
-        DeviceToken.Trim();
-        return Ok(UserService.GenerateRandomString(6));
+        var jsonData = new { key = "button-color", value = strResult.Data };
+        return new JsonResult(jsonData);
+    }
+
+    [HttpPost]
+    public IActionResult GetUserFingerprint([FromBody] UserFingerprintDto? fingerprintDto)
+    {
+
+
+        if (fingerprintDto is not null) return Ok();
+        else return BadRequest("Dto was null or undefined");
     }
 }
 
