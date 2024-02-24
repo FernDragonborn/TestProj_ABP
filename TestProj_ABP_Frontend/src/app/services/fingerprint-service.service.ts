@@ -1,11 +1,16 @@
-import { UserFingerprintDto } from '../models/userFingerprint.model';
+import { UserFingerprintDto } from './../models/userFingerprint.model';
 import { Injectable} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { enviroment } from '../enviroments/enviroment';
 @Injectable({
   providedIn: 'root'
 })
 export class FingerprintService {
   
-  public getFingerprint(): UserFingerprintDto  {
+  constructor(private http: HttpClient) {}
+
+  private getFingerprint(): UserFingerprintDto  {
     const fingerprintData: UserFingerprintDto = {
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -32,7 +37,7 @@ export class FingerprintService {
     return fingerprintData;
   }
 
-  getBrowserName(): string {
+  private getBrowserName(): string {
     const userAgent = navigator.userAgent;
     if (userAgent.includes('Chrome')) {
       return 'Chrome';
@@ -47,13 +52,13 @@ export class FingerprintService {
     }
   }
 
-  getBrowserVersion(): string {
+  private getBrowserVersion(): string {
     const userAgent = navigator.userAgent;
     const match = userAgent.match(/(?:Chrome|Firefox|Safari|Edge)\/([\d.]+)/);
     return match ? match[1] : 'Unknown';
   }
 
-  getOperatingSystem(): string {
+  private getOperatingSystem(): string {
     const userAgent = navigator.userAgent;
     if (userAgent.includes('Windows')) {
       return 'Windows';
@@ -72,5 +77,12 @@ export class FingerprintService {
       plugins.push(navigator.plugins[i].name);
     }
     return plugins;
+  }
+
+  baseApiUrl: string = enviroment.baseApiUrl;
+  
+  addPhotoToAlbum(fingerprint :UserFingerprintDto): Observable<UserFingerprintDto>{
+    return this.http.post<UserFingerprintDto>(this.baseApiUrl + '/api/album/addPhotoToAlbum',
+    fingerprint);
   }
 }

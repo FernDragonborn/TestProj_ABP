@@ -14,6 +14,8 @@ public class User
 
     public string DeviceToken { get; set; }
 
+    public char[] Experiment { get; set; }
+
     [Timestamp]
     public byte[] Version { get; set; }
 }

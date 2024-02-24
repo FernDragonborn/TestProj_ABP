@@ -14,7 +14,6 @@ export class ProductsComponent {
 
   ngOnInit(): void {
     this.fingerprintService.getFingerprint()
-    console.log('User Fingerprint:', this.fingerprintService.fingerprintData);
     // Use the fingerprint as needed
   }
 

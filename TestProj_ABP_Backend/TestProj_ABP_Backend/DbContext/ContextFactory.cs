@@ -2,23 +2,17 @@
 
 namespace TestProj_ABP_Backend.DbContext;
 
-public class ContextFactory
+public static class ContextFactory
 {
-    private static IConfiguration _configuration;
-
-    public ContextFactory(IConfiguration config)
+    public static MyDbContext New(IConfiguration configuration)
     {
-        _configuration = config;
-    }
+        if (configuration is null) { throw new ArgumentException("configuration was null"); }
 
-    private static readonly DbContextOptions Options = new DbContextOptionsBuilder<MyDbContext>()
-        .UseSqlServer(_configuration.GetConnectionString("Default"))
-        .UseLazyLoadingProxies()
-        .Options;
+        DbContextOptions options = new DbContextOptionsBuilder<MyDbContext>()
+            .UseSqlServer(configuration.GetConnectionString("Default"))
+            .UseLazyLoadingProxies()
+            .Options;
 
-    public static MyDbContext CreateNew()
-    {
-        if (_configuration is null) throw new ArgumentException("configuration was null");
-        return new MyDbContext(Options);
+        return new MyDbContext(options);
     }
 }
