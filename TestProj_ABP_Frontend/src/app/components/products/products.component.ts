@@ -8,13 +8,14 @@ import { FingerprintService } from '../../services/fingerprint-service.service';
 })
 
 export class ProductsComponent {
-  public fingerprint: string = "";
+  public fingerprint: any;
 
   constructor(private fingerprintService: FingerprintService) {  }
 
   ngOnInit(): void {
-    this.fingerprint = this.fingerprintService.getFingerprint();
-    console.log('User Fingerprint:', this.fingerprint);
+    this.fingerprintService.getFingerprint()
+    console.log('User Fingerprint:', this.fingerprintService.fingerprintData);
     // Use the fingerprint as needed
   }
+
 }

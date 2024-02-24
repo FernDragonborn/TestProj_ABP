@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using TestProj_ABP_Backend.Models;
 
 namespace TestProj_ABP_Backend.Services
 {
@@ -33,6 +34,34 @@ namespace TestProj_ABP_Backend.Services
             userCredentials[0] = httpContextAccessor.HttpContext?.Request.Headers.UserAgent;
             userCredentials[1] = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
             return userCredentials;
+        }
+
+        public static float CompareBrowserFingerprints(UserFingerprint? user1, UserFingerprint? user2)
+        {
+            if (user1 is null && user2 is null)
+            {
+                return 1F;
+            }
+            else if (user1 == null || user2 == null)
+            {
+                return 0F;
+            }
+
+            var totalProperties = typeof(UserFingerprint).GetProperties().Length;
+            var matchingProperties = 0;
+
+            foreach (var property in typeof(UserFingerprint).GetProperties())
+            {
+                var value1 = property.GetValue(user1);
+                var value2 = property.GetValue(user2);
+
+                if (value1 is not null && value2 is not null && value1.Equals(value2))
+                {
+                    matchingProperties++;
+                }
+            }
+
+            return (float)matchingProperties / totalProperties * 100;
         }
     }
 }
