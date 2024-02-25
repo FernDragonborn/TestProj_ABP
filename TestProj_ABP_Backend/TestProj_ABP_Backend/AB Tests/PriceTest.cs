@@ -1,4 +1,5 @@
 ﻿using TestProj_ABP_Backend.DbContext;
+using TestProj_ABP_Backend.DTOs;
 using TestProj_ABP_Backend.Models;
 using TestProj_ABP_Backend.Services;
 
@@ -8,105 +9,124 @@ public static class PriceTest
 {
     public enum PriceTestEnum
     {
-        ten,
-        twenty,
-        fifty,
-        five,
+        Ten,
+        Twenty,
+        Fifty,
+        Five,
     }
-    private static readonly Random rand = new Random();
-    private static int assignedCount = 0;
+    private static readonly Random rand = new();
     /// <summary>
     /// Assigns number for color AB test
     /// </summary>
     /// <param name="deviceToken"></param>
     /// <param name="configuration"></param>
     /// <returns>true if success, false if user is absent in db</returns>
-    public static bool AssignPrice(string deviceToken, IConfiguration configuration)
+    private static bool AssignPrice(string deviceToken, IConfiguration configuration)
     {
-        if (assignedCount is 0 or > 2000000000)
-        {
-            assignedCount = rand.Next(1, 3);
-        }
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
 
-        if (user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+        if (user is null || user.CreatedAt < DateTime.Parse(configuration["PriceTestStart"]))
         {
             return false;
         }
 
-        if (user is null)
-        {
-            return false;
-        }
-
-        ColorTestModel colorTest = new()
+        PriceTestModel priceTest = new()
         {
             Id = user.UserId,
             DeviceToken = deviceToken,
         };
 
-        int modulo = assignedCount % 3;
-        colorTest.Group = modulo switch
+        int groupInt = rand.Next(0, 100);
+        priceTest.Group = groupInt switch
         {
-
+            <= 5 => PriceTestEnum.Fifty,
+            <= 15 => PriceTestEnum.Twenty,
+            <= 25 => PriceTestEnum.Five,
+            _ => PriceTestEnum.Ten
         };
-        context.ColorTest.Add(colorTest);
+
+        context.PriceTest.Add(priceTest);
         context.SaveChanges();
-        assignedCount++;
 
         return true;
     }
 
 
     /// <summary>
-    /// Gets user experiment variable and converts it to color to be assigned on frontend
+    /// Gets user experiment variable and converts it to price to be assigned on frontend
     /// </summary>
     /// <param name="deviceToken"></param>
     /// <param name="configuration"></param>
-    /// <returns>Result with color to send</returns>
-    /// <exception cref="ArgumentException">user.Experiment[0] is missing</exception>
-    public static Result<string> GetPrice(string deviceToken, IConfiguration configuration)
+    /// <returns>Result with price to send</returns>
+    internal static Result<int?> GetPrice(string deviceToken, IConfiguration configuration)
     {
         if (deviceToken is null)
         {
-            return new Result<string>(false, "", "device token is null");
+            return new Result<int?>(false, null, "deviceToken is null");
         }
         MyDbContext context = ContextFactory.New(configuration);
 
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
 
         //if user is old, he don't know about test
-        if (user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+        if (user.CreatedAt < DateTime.Parse(configuration["PriceTestStart"]))
         {
-            return new Result<string>(false, null, "Test started after user registered");
+            return new Result<int?>(false, null, "Test started after user registered");
         }
 
-        ColorTestModel? colorTest = context.ColorTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
+        PriceTestModel? priceTest = context.PriceTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
 
         if (user is null)
         {
-            return new Result<string>(false, "", "user is missing");
+            return new Result<int?>(false, null, "user is missing");
         }
         //TODO rewrite (?)
-        if (colorTest is null)
+        if (priceTest is null)
         {
-            return new Result<string>(false, "", "colorTest is missing");
+            return new Result<int?>(false, 10, "priceTest is missing");
         }
 
-        string color = colorTest.Group switch
+        int price = priceTest.Group switch
         {
-            ColorTest.ColorTestEnum.Red => "FF0000",
-            ColorTest.ColorTestEnum.Green => "00FF00",
-            ColorTest.ColorTestEnum.Blue => "0000FF",
-            _ => throw new ArgumentException("user.Experiment[0] is missing")
+            PriceTestEnum.Fifty => 50,
+            PriceTestEnum.Twenty => 20,
+            PriceTestEnum.Ten => 10,
+            PriceTestEnum.Five => 5,
         };
 
-        return new Result<string>(
+        return new Result<int?>(
             true,
-            color,
-            "User and color founded"
+            price,
+            "User and price founded"
         );
+    }
+
+    internal static Result<int?> GetPriceViaFingerprint(BrowserFingerprintDto fingerprintDto, IConfiguration configuration, HttpContext httpContext)
+    {
+        BrowserFingerprint fingerprint = new(fingerprintDto.DeviceToken, fingerprintDto, httpContext);
+
+        if (FingerprintService.IsExists(fingerprint, configuration))
+        {
+            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAny(fingerprint, configuration);
+
+            if (res.IsSuccess)
+            {
+                var price2 = GetPrice(res.Data.DeviceToken, configuration).Data;
+                return new Result<int?>(true, price2, "all ok");
+            }
+        }
+
+        User user = UserService.Register(configuration);
+        if (!AssignPrice(user.DeviceToken, configuration))
+        {
+            return new Result<int?>(false, null, "troubles with AssignPrice(), maybe deviceToken was missing");
+        }
+        fingerprint.DeviceToken = user.DeviceToken;
+        FingerprintService.Register(fingerprint, user, configuration);
+        var price = GetPrice(fingerprint.DeviceToken, configuration).Data;
+
+        return new Result<int?>(true, price, "all ok");
     }
 
 }

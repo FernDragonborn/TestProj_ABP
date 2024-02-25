@@ -1,4 +1,5 @@
 ﻿using TestProj_ABP_Backend.DbContext;
+using TestProj_ABP_Backend.DTOs;
 using TestProj_ABP_Backend.Models;
 using TestProj_ABP_Backend.Services;
 
@@ -20,7 +21,7 @@ public static class ColorTest
     /// <param name="deviceToken"></param>
     /// <param name="configuration"></param>
     /// <returns>true if success, false if user is absent in db</returns>
-    public static bool AssignColor(string deviceToken, IConfiguration configuration)
+    private static bool AssignColor(string deviceToken, IConfiguration configuration)
     {
         if (assignedCount is 0 or > 2000000000)
         {
@@ -29,12 +30,7 @@ public static class ColorTest
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
 
-        if (user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
-        {
-            return false;
-        }
-
-        if (user is null)
+        if (user is null || user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
         {
             return false;
         }
@@ -66,8 +62,7 @@ public static class ColorTest
     /// <param name="deviceToken"></param>
     /// <param name="configuration"></param>
     /// <returns>Result with color to send</returns>
-    /// <exception cref="ArgumentException">user.Experiment[0] is missing</exception>
-    public static Result<string> GetColor(string deviceToken, IConfiguration configuration)
+    internal static Result<string> GetColor(string deviceToken, IConfiguration configuration)
     {
         if (deviceToken is null)
         {
@@ -100,7 +95,6 @@ public static class ColorTest
             ColorTestEnum.Red => "FF0000",
             ColorTestEnum.Green => "00FF00",
             ColorTestEnum.Blue => "0000FF",
-            _ => throw new ArgumentException("user.Experiment[0] is missing")
         };
 
         return new Result<string>(
@@ -108,6 +102,33 @@ public static class ColorTest
             color,
             "User and color founded"
         );
+    }
+
+    internal static Result<string> GetColorViaFingerprint(BrowserFingerprintDto fingerprintDto, IConfiguration configuration, HttpContext httpContext)
+    {
+        BrowserFingerprint fingerprint = new(fingerprintDto.DeviceToken, fingerprintDto, httpContext);
+
+        if (FingerprintService.IsExists(fingerprint, configuration))
+        {
+            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAny(fingerprint, configuration);
+
+            if (res.IsSuccess)
+            {
+                var color2 = GetColor(res.Data.DeviceToken, configuration).Data;
+                return new Result<string>(true, color2, "all ok");
+            }
+        }
+
+        User user = UserService.Register(configuration);
+        if (!AssignColor(user.DeviceToken, configuration))
+        {
+            return new Result<string>(false, "", "troubles with AssignColor(), maybe deviceToken was missing");
+        }
+        fingerprint.DeviceToken = user.DeviceToken;
+        FingerprintService.Register(fingerprint, user, configuration);
+        var color = GetColor(fingerprint.DeviceToken, configuration).Data;
+
+        return new Result<string>(true, color, "all ok");
     }
 
 }
