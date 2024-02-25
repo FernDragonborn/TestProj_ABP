@@ -13,9 +13,11 @@ public class User
 
     public string DeviceToken { get; set; }
 
+    public virtual BrowserFingerprint BrowserFingerprint { get; set; }
+
     public virtual ColorTestModel ColorExperiment { get; set; }
 
-    public virtual BrowserFingerprint BrowserFingerprint { get; set; }
+    public virtual PriceTestModel PriceExperiment { get; set; }
 
     [Timestamp]
     public byte[] Version { get; set; }

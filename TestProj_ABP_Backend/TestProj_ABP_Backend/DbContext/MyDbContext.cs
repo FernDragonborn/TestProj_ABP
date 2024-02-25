@@ -15,6 +15,8 @@ public class MyDbContext : Microsoft.EntityFrameworkCore.DbContext
 
     public DbSet<ColorTestModel> ColorTest { get; set; } = null!;
 
+    public DbSet<PriceTestModel> PriceTest { get; set; } = null!;
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

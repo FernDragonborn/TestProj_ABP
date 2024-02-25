@@ -28,6 +28,12 @@ public static class ColorTest
         }
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
+
+        if (user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+        {
+            return false;
+        }
+
         if (user is null)
         {
             return false;
@@ -70,6 +76,13 @@ public static class ColorTest
         MyDbContext context = ContextFactory.New(configuration);
 
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
+
+        //if user is old, he don't know about test
+        if (user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+        {
+            return new Result<string>(false, null, "Test started after user registered");
+        }
+
         ColorTestModel? colorTest = context.ColorTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
 
         if (user is null)
