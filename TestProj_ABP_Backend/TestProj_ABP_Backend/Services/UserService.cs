@@ -54,46 +54,16 @@ public class UserService
         return httpContext.Connection.RemoteIpAddress?.ToString();
     }
 
-    public static float CompareBrowserFingerprints(BrowserFingerprint? user1, BrowserFingerprint? user2)
+    internal static bool IsExists(User user, IConfiguration configuration)
     {
-        if (user1 is null && user2 is null)
+        MyDbContext context = ContextFactory.New(configuration);
+
+        if (user.DeviceToken is not null)
         {
-            return 1F;
-        }
-        else if (user1 == null || user2 == null)
-        {
-            return 0F;
+            return context.Users.Any(x => x.DeviceToken == user.DeviceToken);
         }
 
-        var totalProperties = typeof(BrowserFingerprint).GetProperties().Length;
-        var matchingProperties = 0;
-
-        foreach (var property in typeof(BrowserFingerprint).GetProperties())
-        {
-            var value1 = property.GetValue(user1);
-            var value2 = property.GetValue(user2);
-
-            if (value1 is not null && value2 is not null && value1.Equals(value2))
-            {
-                matchingProperties++;
-            }
-            else if (value1 is null && value2 is null)
-            {
-                totalProperties--;
-            }
-            else if (value1.GetType().IsArray && value2.GetType().IsArray)
-            {
-                if (Enumerable.SequenceEqual(
-                        (IEnumerable<string>)value1,
-                        (IEnumerable<string>)value2))
-                {
-                    matchingProperties++;
-                }
-            }
-        }
-
-        return (float)matchingProperties / totalProperties;
+        return context.Users.Any(x => x.UserId == user.UserId);
     }
-
 
 }

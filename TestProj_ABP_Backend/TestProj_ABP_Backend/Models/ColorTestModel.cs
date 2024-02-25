@@ -10,6 +10,7 @@ public class ColorTestModel
     [ForeignKey("User")]
     public Guid Id { get; set; }
 
+    public string DeviceToken { get; set; }
 
     [Required]
     public ColorTest.ColorTestEnum Group { get; set; }

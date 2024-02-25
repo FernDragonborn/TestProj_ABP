@@ -1,23 +1,36 @@
-import { UserFingerprintDto } from './../models/userFingerprint.model';
+import { UserFingerprintDto as BrowserFingerprintDto } from './../models/userFingerprint.model';
 import { Injectable} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { enviroment } from '../enviroments/enviroment';
 @Injectable({
   providedIn: 'root'
 })
 export class FingerprintService {
   
+  baseApiUrl: string = enviroment.baseApiUrl;
+  
   constructor(private http: HttpClient) {}
+  
+  public GetColorViaFingerprint(): Observable<string>{
+    const fingerprint = this.getFingerprint();
+    return this.http.post<{ key: string, value: string }>(this.baseApiUrl + '/experiment/get-color-from-fingerprint',
+    fingerprint)
+    .pipe(
+      map((response: { key: string, value: string }) => response.value)
+    );
+  }
 
-  private getFingerprint(): UserFingerprintDto  {
-    const fingerprintData: UserFingerprintDto = {
+  private getFingerprint(): BrowserFingerprintDto  {
+    const fingerprintData: BrowserFingerprintDto = {
+      deviceToken: null,
+      userAgent: null,
       language: navigator.language,
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,
       colorDepth: window.screen.colorDepth,
       pixelRatio: window.devicePixelRatio,
-      orintation: window.screen.orientation.angle,
+      orientation: window.screen.orientation.angle,
       browserName: this.getBrowserName(),
       browserVersion: this.getBrowserVersion(),
       os: this.getOperatingSystem(),
@@ -70,18 +83,11 @@ export class FingerprintService {
     }
   }
 
-  getInstalledPlugins(): string[] {
+  private getInstalledPlugins(): string[] {
     const plugins = [];
     for (let i = 0; i < navigator.plugins.length; i++) {
       plugins.push(navigator.plugins[i].name);
     }
     return plugins;
-  }
-
-  baseApiUrl: string = enviroment.baseApiUrl;
-  
-  addPhotoToAlbum(fingerprint :UserFingerprintDto): Observable<UserFingerprintDto>{
-    return this.http.post<UserFingerprintDto>(this.baseApiUrl + '/api/album/addPhotoToAlbum',
-    fingerprint);
   }
 }

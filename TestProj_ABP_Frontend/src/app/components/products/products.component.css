@@ -1,4 +1,7 @@
-$primary: #5e9b4f;
+:host{
+    --btn-bg-color: {{buttonColor}}
+    --btn-br-color: {{buttonColor}}
+}
 
 .card-title{
     font-family: Montserrat,sans-serif;
@@ -19,7 +22,7 @@ $primary: #5e9b4f;
     font-weight: 400;
     font-style: normal;
     letter-spacing: .05em;
-    // text-transform: uppercase;
+    text-transform: uppercase;
 }
 
 @import '../../node_modules/bootstrap/scss/bootstrap';

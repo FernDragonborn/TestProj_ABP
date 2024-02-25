@@ -1,11 +1,12 @@
 export class UserFingerprintDto{
-    deviceToken: string | undefined = undefined;
+    deviceToken: string | null = null;
+    userAgent: string | null = null;
     language: string | undefined = undefined;
     screenWidth: number | undefined = undefined;
     screenHeight: number | undefined = undefined;
     colorDepth: number | undefined = undefined;
     pixelRatio: number | undefined = undefined;
-    orintation: number | undefined = undefined;
+    orientation: number | undefined = undefined;
     browserName: string | undefined = undefined;
     browserVersion: string | undefined = undefined;
     os: string | undefined = undefined;

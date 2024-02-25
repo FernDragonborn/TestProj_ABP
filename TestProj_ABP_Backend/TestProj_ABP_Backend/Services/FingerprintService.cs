@@ -27,48 +27,55 @@ internal static class FingerprintService
         }
     }
 
-    internal static Result Register(BrowserFingerprint fingerprint, IConfiguration configuration)
+    internal static Result<float> Register(BrowserFingerprint fingerprint, User user, IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
         bool isExists = context.Fingerprints.Any(x => x.DeviceToken == fingerprint.DeviceToken);
 
+        float similarityPercent = 0F;
         if (isExists)
         {
             var dbFingerprint = context.Fingerprints.Find(fingerprint.DeviceToken);
-            float similarityPercent = CompareFingerprints(fingerprint, dbFingerprint);
+            similarityPercent = CompareFingerprints(fingerprint, dbFingerprint);
         }
 
+        fingerprint.Id = user.UserId;
         context.Fingerprints.Add(fingerprint);
         context.SaveChanges();
 
-        return new Result(true, "");
+        return new Result<float>(true, similarityPercent, "");
     }
 
-    internal static bool IsSimilarToAny(BrowserFingerprint receievedFingerpint, IConfiguration configuration)
+    internal static Result<BrowserFingerprint> IsSimilarToAny(BrowserFingerprint receievedFingerpint, IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
-        var strodredFingerprint = context.Fingerprints.Find(receievedFingerpint.DeviceToken);
+        BrowserFingerprint storedFingerprint = new();
 
-        float similarity = CompareFingerprints(receievedFingerpint, strodredFingerprint);
+        if (receievedFingerpint.Id is not null) storedFingerprint = context.Fingerprints.Find(receievedFingerpint.Id);
+        if (receievedFingerpint.DeviceToken is not null) storedFingerprint = context.Fingerprints.FirstOrDefault(x => x.DeviceToken == receievedFingerpint.DeviceToken);
+        if (receievedFingerpint.Ip is not null) storedFingerprint = context.Fingerprints.FirstOrDefault(x => x.Ip == receievedFingerpint.Ip);
+
+        float similarity = CompareFingerprints(receievedFingerpint, storedFingerprint);
 
         const float minSimilarity = 0.90F;
         bool isSimilar = similarity > minSimilarity;
         if (similarity != 1F && isSimilar)
         {
+            receievedFingerpint.Id = storedFingerprint.Id;
             context.Fingerprints.Update(receievedFingerpint);
             context.SaveChanges();
         }
 
-        return isSimilar;
+        return new Result<BrowserFingerprint>(isSimilar, receievedFingerpint, "");
     }
 
-    internal static float CompareFingerprints(BrowserFingerprint? user1, BrowserFingerprint? user2)
+    internal static float CompareFingerprints(BrowserFingerprint? receivedFingerprint, BrowserFingerprint? storedFingerprint)
     {
-        if (user1 is null && user2 is null)
+        if (receivedFingerprint is null && storedFingerprint is null)
         {
             return 1F;
         }
-        else if (user1 is null || user2 is null)
+        else if (receivedFingerprint is null || storedFingerprint is null)
         {
             return 0F;
         }
@@ -76,11 +83,20 @@ internal static class FingerprintService
         var totalProperties = typeof(BrowserFingerprint).GetProperties().Length;
         var matchingProperties = 0;
 
+        int iterations = 1;
         foreach (var property in typeof(BrowserFingerprint).GetProperties())
         {
-            var value1 = property.GetValue(user1);
-            var value2 = property.GetValue(user2);
-
+            var value1 = property.GetValue(receivedFingerprint);
+            var value2 = property.GetValue(storedFingerprint);
+            var name = property.Name;
+            //skip id check, because received would not have an id
+            if (name is "User" or "Id" or "DeviceToken")
+            {
+                iterations++;
+                totalProperties--;
+                continue;
+            }
+            iterations++;
             if (value1 is not null && value2 is not null && value1.Equals(value2))
             {
                 matchingProperties++;
@@ -90,8 +106,13 @@ internal static class FingerprintService
             {
                 totalProperties--;
             }
+            else if (value1 is null || value2 is null)
+            {
+                //can't match null and not null
+                continue;
+            }
             //there is an array of plugins and it's block for this exact array
-            else if (value1.GetType().IsArray && value1.GetType().IsArray)
+            else if (value1.GetType().IsArray && value2.GetType().IsArray)
             {
                 if (Enumerable.SequenceEqual(
                         (IEnumerable<string>)value1,
@@ -101,7 +122,6 @@ internal static class FingerprintService
                 }
             }
         }
-
         //TODO needs to rewrite this ifs, vecause I'm not sure of side effects, when both are thiout properties. 
         //Maybe it's more reasonable to update context, then?
         if (matchingProperties == 0 && totalProperties == 0) return 1F;

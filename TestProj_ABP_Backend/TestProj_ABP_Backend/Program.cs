@@ -15,6 +15,12 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
+        //Uncomment for api models problems
+        //builder.Services.Configure<ApiBehaviorOptions>(apiBehaviorOptions =>
+        //{
+        //    apiBehaviorOptions.SuppressModelStateInvalidFilter = true;
+        //});
+
         // Add services to the container.
         builder.Services.AddControllers();
         builder.Services.AddDbContext<MyDbContext>(options =>

@@ -28,12 +28,16 @@ public static class ColorTest
         }
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
-        ColorTestModel? colorTest = context.ColorTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
-
-        if (user is null || colorTest is null)
+        if (user is null)
         {
             return false;
         }
+
+        ColorTestModel colorTest = new()
+        {
+            Id = user.UserId,
+            DeviceToken = deviceToken,
+        };
 
         int modulo = assignedCount % 3;
         colorTest.Group = modulo switch
@@ -42,7 +46,7 @@ public static class ColorTest
             2 => ColorTestEnum.Green,
             3 => ColorTestEnum.Blue,
         };
-
+        context.ColorTest.Add(colorTest);
         context.SaveChanges();
         assignedCount++;
 
