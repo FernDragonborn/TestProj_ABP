@@ -6,6 +6,12 @@ namespace TestProj_ABP_Backend.AB_Tests;
 
 public static class ColorTest
 {
+    public enum ColorTestEnum
+    {
+        Red,
+        Green,
+        Blue,
+    }
     private static readonly Random rand = new Random();
     private static int assignedCount = 0;
     /// <summary>
@@ -22,17 +28,19 @@ public static class ColorTest
         }
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
-        if (user is null)
+        ColorTestModel? colorTest = context.ColorTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
+
+        if (user is null || colorTest is null)
         {
             return false;
         }
 
         int modulo = assignedCount % 3;
-        user.Experiment[0] = modulo switch
+        colorTest.Group = modulo switch
         {
-            1 => '1',
-            2 => '2',
-            3 => '3',
+            1 => ColorTestEnum.Red,
+            2 => ColorTestEnum.Green,
+            3 => ColorTestEnum.Blue,
         };
 
         context.SaveChanges();
@@ -53,36 +61,35 @@ public static class ColorTest
     {
         if (deviceToken is null)
         {
-            return new Result<string>("", false, "device token is null");
+            return new Result<string>(false, "", "device token is null");
         }
         MyDbContext context = ContextFactory.New(configuration);
+
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
+        ColorTestModel? colorTest = context.ColorTest.FirstOrDefault(x => x.User.DeviceToken == deviceToken);
 
         if (user is null)
         {
-            return new Result<string>("", false, "user is missing");
+            return new Result<string>(false, "", "user is missing");
+        }
+        //TODO rewrite (?)
+        if (colorTest is null)
+        {
+            return new Result<string>(false, "", "colorTest is missing");
         }
 
-
-        //I used string in sql for multiple experiments.
-        //In such case, it's first experiment, so we watch first char of string and assign value
-        //There's a lot variant of chars, so I assumed that would be okay varian for tests
-        //P.S.: and we can contain many tests, for each user in this field
-
-        //P.P.S.: if value is 0, than user do not take part in AB test
-        string color = user.Experiment[0] switch
+        string color = colorTest.Group switch
         {
-            '1' => "FF0000",
-            '2' => "00FF00",
-            '3' => "0000FF",
-            '0' => "",
+            ColorTestEnum.Red => "FF0000",
+            ColorTestEnum.Green => "00FF00",
+            ColorTestEnum.Blue => "0000FF",
             _ => throw new ArgumentException("user.Experiment[0] is missing")
         };
 
         return new Result<string>(
-            color,
             true,
-            "User founded"
+            color,
+            "User and color founded"
         );
     }
 

@@ -6,7 +6,6 @@ public class User
 {
     public User() { }
 
-
     [Key]
     public Guid UserId { get; set; }
 
@@ -14,7 +13,9 @@ public class User
 
     public string DeviceToken { get; set; }
 
-    public char[] Experiment { get; set; }
+    public virtual ColorTestModel ColorExperiment { get; set; }
+
+    public virtual BrowserFingerprint BrowserFingerprint { get; set; }
 
     [Timestamp]
     public byte[] Version { get; set; }

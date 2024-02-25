@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using TestProj_ABP_Backend.AB_Tests;
 using TestProj_ABP_Backend.DTOs;
+using TestProj_ABP_Backend.Models;
 using TestProj_ABP_Backend.Services;
 
 namespace TestProj_ABP_Backend.Controllers;
@@ -30,24 +32,38 @@ public class UserController : ControllerBase
 
         if (strResult.IsSuccess == false)
         {
-            var user = UserService.RegisterUser(_configuration);
+            var user = UserService.Register(_configuration);
             DeviceToken = user.DeviceToken;
 
             //if user was regitered, so it's in DB and result would be positive in any outcome
             ColorTest.AssignColor(DeviceToken, _configuration);
             strResult = ColorTest.GetColor(DeviceToken, _configuration);
         }
+
         var jsonData = new { key = "button-color", value = strResult.Data };
         return new JsonResult(jsonData);
     }
 
-    [HttpPost]
-    public IActionResult GetUserFingerprint([FromBody] UserFingerprintDto? fingerprintDto)
+
+    [HttpPost("check-fingerprint")]
+    public IActionResult CheckFingerprint([FromBody] BrowserFingerprintDto fingerprintDto)
     {
+        BrowserFingerprint fingerprint = new(fingerprintDto.DeviceToken, fingerprintDto, HttpContext);
 
+        if (!FingerprintService.IsExists(fingerprint, _configuration))
+        {
+            bool isSimilar = FingerprintService.IsSimilarToAny(fingerprint, _configuration);
 
-        if (fingerprintDto is not null) return Ok();
-        else return BadRequest("Dto was null or undefined");
+            if (isSimilar)
+            {
+                return Ok(fingerprint);
+            }
+        }
+
+        User user = UserService.Register(_configuration);
+        fingerprint.DeviceToken = user.DeviceToken;
+        FingerprintService.Register(fingerprint, _configuration);
+        return Created(Request.GetDisplayUrl(), fingerprint);
     }
 }
 

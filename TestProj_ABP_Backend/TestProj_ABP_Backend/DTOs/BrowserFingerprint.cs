@@ -1,6 +1,7 @@
 ﻿namespace TestProj_ABP_Backend.DTOs;
-public struct UserFingerprintDto
+public struct BrowserFingerprintDto
 {
+    public string? DeviceToken { get; set; }
     public string? UserAgent { get; set; }
     public string? Language { get; set; }
     public int? ScreenWidth { get; set; }

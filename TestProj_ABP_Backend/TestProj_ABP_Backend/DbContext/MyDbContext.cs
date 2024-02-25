@@ -11,7 +11,10 @@ public class MyDbContext : Microsoft.EntityFrameworkCore.DbContext
 
     public DbSet<User> Users { get; set; } = null!;
 
-    public DbSet<UserFingerprint> Fingerprints { get; set; } = null!;
+    public DbSet<BrowserFingerprint> Fingerprints { get; set; } = null!;
+
+    public DbSet<ColorTestModel> ColorTest { get; set; } = null!;
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

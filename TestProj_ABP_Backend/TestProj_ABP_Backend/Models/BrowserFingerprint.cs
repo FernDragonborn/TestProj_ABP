@@ -1,17 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using TestProj_ABP_Backend.DTOs;
 using TestProj_ABP_Backend.Services;
 
 namespace TestProj_ABP_Backend.Models;
-public class UserFingerprint
+public class BrowserFingerprint
 {
-    public UserFingerprint() { }
+    public BrowserFingerprint() { }
 
-    public UserFingerprint(string deviceToken, UserFingerprintDto dto, IHttpContextAccessor httpContextAccessor)
+    public BrowserFingerprint(string deviceToken, BrowserFingerprintDto dto, HttpContext httpContext)
     {
         DeviceToken = deviceToken;
-        UserAgent2 = UserService.GetUserAgent(httpContextAccessor);
-        Ip = UserService.GetUserIp(httpContextAccessor);
+        UserAgent2 = UserService.GetUserAgent(httpContext);
+        Ip = UserService.GetUserIp(httpContext);
         UserAgent = dto.UserAgent;
         Language = dto.Language;
         ScreenWidth = dto.ScreenWidth;
@@ -33,7 +33,12 @@ public class UserFingerprint
         RelativeTimeFormatInfo = dto.RelativeTimeFormatInfo;
         PluralRulesInfo = dto.PluralRulesInfo;
     }
-    [Key]
+
+    [ForeignKey(nameof(User))]
+    public Guid Id { get; set; }
+
+    public virtual User User { get; set; }
+
     public string DeviceToken { get; set; }
     public string? Ip { get; set; }
     public string? UserAgent { get; set; }

@@ -12,7 +12,6 @@ export class FingerprintService {
 
   private getFingerprint(): UserFingerprintDto  {
     const fingerprintData: UserFingerprintDto = {
-      userAgent: navigator.userAgent,
       language: navigator.language,
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,

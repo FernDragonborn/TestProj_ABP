@@ -8,7 +8,7 @@ public class UserService
 {
     private static readonly Random random = new();
 
-    public static User RegisterUser(IConfiguration configuration)
+    public static User Register(IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
         User user = new User()
@@ -16,7 +16,6 @@ public class UserService
             UserId = Guid.NewGuid(),
             CreatedAt = DateTime.Now,
             DeviceToken = GenerateRandomString(6),
-            Experiment = new char[2]
         };
 
         context.Users.Add(user);
@@ -45,17 +44,17 @@ public class UserService
         return stringBuilder.ToString();
     }
 
-    public static string? GetUserAgent(IHttpContextAccessor httpContextAccessor)
+    public static string? GetUserAgent(HttpContext httpContext)
     {
-        return httpContextAccessor.HttpContext?.Request.Headers.UserAgent;
+        return httpContext.Request.Headers.UserAgent;
     }
 
-    public static string? GetUserIp(IHttpContextAccessor httpContextAccessor)
+    public static string? GetUserIp(HttpContext httpContext)
     {
-        return httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        return httpContext.Connection.RemoteIpAddress?.ToString();
     }
 
-    public static float CompareBrowserFingerprints(UserFingerprint? user1, UserFingerprint? user2)
+    public static float CompareBrowserFingerprints(BrowserFingerprint? user1, BrowserFingerprint? user2)
     {
         if (user1 is null && user2 is null)
         {
@@ -66,10 +65,10 @@ public class UserService
             return 0F;
         }
 
-        var totalProperties = typeof(UserFingerprint).GetProperties().Length;
+        var totalProperties = typeof(BrowserFingerprint).GetProperties().Length;
         var matchingProperties = 0;
 
-        foreach (var property in typeof(UserFingerprint).GetProperties())
+        foreach (var property in typeof(BrowserFingerprint).GetProperties())
         {
             var value1 = property.GetValue(user1);
             var value2 = property.GetValue(user2);
@@ -78,9 +77,22 @@ public class UserService
             {
                 matchingProperties++;
             }
+            else if (value1 is null && value2 is null)
+            {
+                totalProperties--;
+            }
+            else if (value1.GetType().IsArray && value2.GetType().IsArray)
+            {
+                if (Enumerable.SequenceEqual(
+                        (IEnumerable<string>)value1,
+                        (IEnumerable<string>)value2))
+                {
+                    matchingProperties++;
+                }
+            }
         }
 
-        return (float)matchingProperties / totalProperties * 100;
+        return (float)matchingProperties / totalProperties;
     }
 
 

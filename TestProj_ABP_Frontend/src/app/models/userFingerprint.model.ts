@@ -1,5 +1,5 @@
 export class UserFingerprintDto{
-    userAgent: string | undefined = undefined;
+    deviceToken: string | undefined = undefined;
     language: string | undefined = undefined;
     screenWidth: number | undefined = undefined;
     screenHeight: number | undefined = undefined;
