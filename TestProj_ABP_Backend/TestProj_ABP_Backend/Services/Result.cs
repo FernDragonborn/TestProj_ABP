@@ -1,10 +1,12 @@
 ﻿namespace TestProj_ABP_Backend.Services;
-public class Result<T> : Result
+public class Result<T>
 {
     public Result() { }
-    public Result(bool isSuccess, T data, string message) : base(isSuccess, message)
+    public Result(bool isSuccess, T data, string message)
     {
         Data = data;
+        IsSuccess = isSuccess;
+        Message = message;
     }
 
     public bool IsSuccess { get; set; }
