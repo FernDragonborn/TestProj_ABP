@@ -1,0 +1,31 @@
+<div class="container mt-4">
+  <h2>Simple Table with Bootstrap</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>a</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for(user of this.users; track user){
+      <tr>
+        <td>
+          {{ user.deviceToken }}
+        </td>
+        <td>
+          {{ user.createdAt }}
+        </td>
+        <td>
+          {{ user.colorTest }}
+        </td>
+        <td>
+          {{ user.priceTest }}
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>

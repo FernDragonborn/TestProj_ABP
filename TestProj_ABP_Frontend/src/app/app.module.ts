@@ -7,12 +7,15 @@ import { AppComponent } from './app.component';
 import { ProductsComponent } from './components/products/products.component';
 import { FingerprintService } from './services/fingerprint-service.service';
 import { ButtonColorService } from './services/button-color.service';
-import { HttpClientModule } from '@angular/common/http'; // HERE
+import { HttpClientModule } from '@angular/common/http';
+import { ResultsTableComponent } from './components/results-table/results-table.component'; // HERE
+import { UserDataService } from './services/user-data.service';
 
 @NgModule({
   declarations: [
     AppComponent,
-    ProductsComponent
+    ProductsComponent,
+    ResultsTableComponent
   ],
   imports: [
     BrowserModule,
@@ -20,7 +23,11 @@ import { HttpClientModule } from '@angular/common/http'; // HERE
     HttpClientModule,
     NgbModule
   ],
-  providers: [FingerprintService, ButtonColorService],
+  providers: [
+    FingerprintService, 
+    ButtonColorService,
+    UserDataService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

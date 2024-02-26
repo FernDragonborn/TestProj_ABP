@@ -1,4 +1,4 @@
-import { UserFingerprintDto as BrowserFingerprintDto } from './../models/userFingerprint.model';
+import { UserFingerprintDto as BrowserFingerprintDto } from '../models/userFingerprintDto.model';
 import { Injectable} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';

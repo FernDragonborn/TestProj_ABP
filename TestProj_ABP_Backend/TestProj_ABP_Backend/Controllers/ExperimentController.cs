@@ -95,7 +95,7 @@ public class ExperimentController : ControllerBase
     ///  <response code="400">Test started after user registered. Or read message</response>
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    [HttpPost("get-color-from-fingerprint")]
+    [HttpPost("get-price-from-fingerprint")]
     public IActionResult GetPriceViaFingerprint([FromBody] BrowserFingerprintDto fingerprintDto)
     {
         Result<int?> res = PriceTest.GetPriceViaFingerprint(fingerprintDto, _configuration, HttpContext);
@@ -105,6 +105,13 @@ public class ExperimentController : ControllerBase
             return Ok(new { key = "price", value = res.Data });
         }
         return BadRequest(res.Message);
+    }
+
+    [HttpGet("data")]
+    [ProducesResponseType(200)]
+    public IActionResult GetUserData()
+    {
+        return Ok(UserService.GetUserData(_configuration));
     }
 }
 

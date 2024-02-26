@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using TestProj_ABP_Backend.DbContext;
+using TestProj_ABP_Backend.DTOs;
 using TestProj_ABP_Backend.Models;
 
 namespace TestProj_ABP_Backend.Services;
@@ -8,7 +9,7 @@ public class UserService
 {
     private static readonly Random random = new();
 
-    public static User Register(IConfiguration configuration)
+    internal static User Register(IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
         User user = new User()
@@ -29,7 +30,7 @@ public class UserService
     /// </summary>
     /// <param name="length">Lenght of string needed.</param>
     /// <returns>Random string.</returns>
-    public static string GenerateRandomString(int length)
+    internal static string GenerateRandomString(int length)
     {
         const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         StringBuilder stringBuilder = new StringBuilder(length);
@@ -44,26 +45,47 @@ public class UserService
         return stringBuilder.ToString();
     }
 
-    public static string? GetUserAgent(HttpContext httpContext)
+    internal static string? GetUserAgent(HttpContext httpContext)
     {
         return httpContext.Request.Headers.UserAgent;
     }
 
-    public static string? GetUserIp(HttpContext httpContext)
+    internal static string? GetUserIp(HttpContext httpContext)
     {
         return httpContext.Connection.RemoteIpAddress?.ToString();
     }
 
-    internal static bool IsExists(User user, IConfiguration configuration)
+    internal static UserDataDto[] GetUserData(IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
+        User[] users = context.Users.ToArray();
+        ColorTestModel[] colorTests = context.ColorTest.ToArray();
+        PriceTestModel[] priceTests = context.PriceTest.ToArray();
 
-        if (user.DeviceToken is not null)
+        List<UserDataDto> data = new();
+        for (int i = 0; i < users.Length; i++)
         {
-            return context.Users.Any(x => x.DeviceToken == user.DeviceToken);
+            User? user = users[i];
+            data.Add(new()
+            {
+                deviceToken = user.DeviceToken,
+                createdAt = user.CreatedAt,
+            });
         }
 
-        return context.Users.Any(x => x.UserId == user.UserId);
-    }
 
+        for (int i = 0; i < colorTests.Length; i++)
+        {
+            if (data[i].deviceToken == colorTests[i].DeviceToken)
+                data[i].colorTest = colorTests[i].Group.ToString();
+        }
+
+        for (int i = 0; i < priceTests.Length; i++)
+        {
+            if (data[i].deviceToken == priceTests[i].DeviceToken)
+                data[i].priceTest = priceTests[i].Group.ToString();
+        }
+
+        return data.ToArray();
+    }
 }
