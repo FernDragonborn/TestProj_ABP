@@ -16,12 +16,14 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         //Uncomment for api models problems
+        //https://mirsaeedi.medium.com/asp-net-core-customize-validation-error-message-9022c12d3d7d
         //builder.Services.Configure<ApiBehaviorOptions>(apiBehaviorOptions =>
         //{
         //    apiBehaviorOptions.SuppressModelStateInvalidFilter = true;
         //});
 
-        // Add services to the container.
+
+
         builder.Services.AddControllers();
         builder.Services.AddDbContext<MyDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));

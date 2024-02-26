@@ -7,6 +7,10 @@ namespace TestProj_ABP_Backend.AB_Tests;
 
 public static class PriceTest
 {
+
+    /// <summary>
+    /// Groups of test summared to enum
+    /// </summary>
     public enum PriceTestEnum
     {
         Ten,

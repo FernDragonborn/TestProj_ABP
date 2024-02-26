@@ -7,6 +7,9 @@ namespace TestProj_ABP_Backend.AB_Tests;
 
 public static class ColorTest
 {
+    /// <summary>
+    /// Groups of test summared to enum
+    /// </summary>
     public enum ColorTestEnum
     {
         Red,
@@ -30,9 +33,16 @@ public static class ColorTest
         MyDbContext context = ContextFactory.New(configuration);
         User? user = context.Users.FirstOrDefault(x => x.DeviceToken == deviceToken);
 
-        if (user is null || user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+        try
         {
-            return false;
+            if (user is null || user.CreatedAt < DateTime.Parse(configuration["ColorTestStart"]))
+            {
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+
         }
 
         ColorTestModel colorTest = new()
@@ -44,9 +54,9 @@ public static class ColorTest
         int modulo = assignedCount % 3;
         colorTest.Group = modulo switch
         {
-            1 => ColorTestEnum.Red,
-            2 => ColorTestEnum.Green,
-            3 => ColorTestEnum.Blue,
+            0 => ColorTestEnum.Red,
+            1 => ColorTestEnum.Green,
+            2 => ColorTestEnum.Blue,
         };
         context.ColorTest.Add(colorTest);
         context.SaveChanges();
@@ -126,8 +136,12 @@ public static class ColorTest
         }
         fingerprint.DeviceToken = user.DeviceToken;
         FingerprintService.Register(fingerprint, user, configuration);
-        var color = GetColor(fingerprint.DeviceToken, configuration).Data;
-
+        var res2 = GetColor(fingerprint.DeviceToken, configuration);
+        var color = res2.Data;
+        if (!res2.IsSuccess)
+        {
+            throw new Exception();
+        }
         return new Result<string>(true, color, "all ok");
     }
 

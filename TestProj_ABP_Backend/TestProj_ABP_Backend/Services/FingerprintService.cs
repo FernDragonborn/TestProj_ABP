@@ -66,6 +66,7 @@ internal static class FingerprintService
             context.SaveChanges();
         }
 
+        receievedFingerpint.DeviceToken = storedFingerprint.DeviceToken;
         return new Result<BrowserFingerprint>(isSimilar, receievedFingerpint, "");
     }
 
