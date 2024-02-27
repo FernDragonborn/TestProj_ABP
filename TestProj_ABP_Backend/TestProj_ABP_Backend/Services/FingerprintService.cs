@@ -46,7 +46,7 @@ internal static class FingerprintService
         return new Result<float>(true, similarityPercent, "");
     }
 
-    internal static Result<BrowserFingerprint> IsSimilarToAny(BrowserFingerprint receievedFingerpint, IConfiguration configuration)
+    internal static Result<BrowserFingerprint> IsSimilarToAnyIfYesUpdate(BrowserFingerprint receievedFingerpint, IConfiguration configuration)
     {
         MyDbContext context = ContextFactory.New(configuration);
         BrowserFingerprint storedFingerprint = new();
@@ -66,8 +66,7 @@ internal static class FingerprintService
             context.SaveChanges();
         }
 
-        receievedFingerpint.DeviceToken = storedFingerprint.DeviceToken;
-        return new Result<BrowserFingerprint>(isSimilar, receievedFingerpint, "");
+        return new Result<BrowserFingerprint>(isSimilar, storedFingerprint, "");
     }
 
     internal static float CompareFingerprints(BrowserFingerprint? receivedFingerprint, BrowserFingerprint? storedFingerprint)

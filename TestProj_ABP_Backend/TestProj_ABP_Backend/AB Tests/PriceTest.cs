@@ -88,7 +88,7 @@ public static class PriceTest
         //TODO rewrite (?)
         if (priceTest is null)
         {
-            return new Result<int?>(false, 10, "priceTest is missing");
+            return new Result<int?>(false, null, "priceTest is missing");
         }
 
         int price = priceTest.Group switch
@@ -106,14 +106,23 @@ public static class PriceTest
         );
     }
 
+    private static bool IsAssigned(string DeviceToken, IConfiguration configuration)
+    {
+        MyDbContext context = ContextFactory.New(configuration);
+        return context.PriceTest.Any(x => x.DeviceToken == DeviceToken);
+    }
+
     internal static Result<int?> GetPriceViaFingerprint(BrowserFingerprintDto fingerprintDto, IConfiguration configuration, HttpContext httpContext)
     {
         BrowserFingerprint fingerprint = new(fingerprintDto.DeviceToken, fingerprintDto, httpContext);
 
         if (FingerprintService.IsExists(fingerprint, configuration))
         {
-            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAny(fingerprint, configuration);
-
+            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAnyIfYesUpdate(fingerprint, configuration);
+            if (!IsAssigned(res.Data.DeviceToken, configuration))
+            {
+                AssignPrice(res.Data.DeviceToken, configuration);
+            }
             if (res.IsSuccess)
             {
                 var price2 = GetPrice(res.Data.DeviceToken, configuration).Data;
@@ -122,9 +131,9 @@ public static class PriceTest
         }
 
         User user = UserService.Register(configuration);
-        if (!AssignPrice(user.DeviceToken, configuration))
+        if (!IsAssigned(user.DeviceToken, configuration))
         {
-            return new Result<int?>(false, null, "troubles with AssignPrice(), maybe deviceToken was missing");
+            PriceTest.AssignPrice(user.DeviceToken, configuration);
         }
         fingerprint.DeviceToken = user.DeviceToken;
         FingerprintService.Register(fingerprint, user, configuration);

@@ -53,7 +53,7 @@ public class ExperimentController : ControllerBase
     [HttpPost("get-color-from-fingerprint")]
     public IActionResult GetColorViaFingerprint([FromBody] BrowserFingerprintDto fingerprintDto)
     {
-        Result<string> res = ColorTest.GetColorViaFingerprint(fingerprintDto, _configuration, HttpContext);
+        Result<string?> res = ColorTest.GetColorViaFingerprint(fingerprintDto, _configuration, HttpContext);
 
         if (res.IsSuccess)
         {
@@ -98,7 +98,6 @@ public class ExperimentController : ControllerBase
     [HttpPost("get-price-from-fingerprint")]
     public IActionResult GetPriceViaFingerprint([FromBody] BrowserFingerprintDto fingerprintDto)
     {
-        Console.WriteLine(Request.ToString());
         Result<int?> res = PriceTest.GetPriceViaFingerprint(fingerprintDto, _configuration, HttpContext);
 
         if (res.IsSuccess)

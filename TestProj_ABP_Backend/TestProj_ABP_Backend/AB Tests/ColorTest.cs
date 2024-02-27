@@ -114,25 +114,34 @@ public static class ColorTest
         );
     }
 
-    internal static Result<string> GetColorViaFingerprint(BrowserFingerprintDto fingerprintDto, IConfiguration configuration, HttpContext httpContext)
+    private static bool IsAssigned(string DeviceToken, IConfiguration configuration)
+    {
+        MyDbContext context = ContextFactory.New(configuration);
+        return context.ColorTest.Any(x => x.DeviceToken == DeviceToken);
+    }
+
+    internal static Result<string?> GetColorViaFingerprint(BrowserFingerprintDto fingerprintDto, IConfiguration configuration, HttpContext httpContext)
     {
         BrowserFingerprint fingerprint = new(fingerprintDto.DeviceToken, fingerprintDto, httpContext);
 
         if (FingerprintService.IsExists(fingerprint, configuration))
         {
-            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAny(fingerprint, configuration);
-
+            Result<BrowserFingerprint> res = FingerprintService.IsSimilarToAnyIfYesUpdate(fingerprint, configuration);
+            if (!IsAssigned(res.Data.DeviceToken, configuration))
+            {
+                AssignColor(res.Data.DeviceToken, configuration);
+            }
             if (res.IsSuccess)
             {
                 var color2 = GetColor(res.Data.DeviceToken, configuration).Data;
-                return new Result<string>(true, color2, "all ok");
+                return new Result<string?>(true, color2, "all ok");
             }
         }
 
         User user = UserService.Register(configuration);
-        if (!AssignColor(user.DeviceToken, configuration))
+        if (!IsAssigned(user.DeviceToken, configuration))
         {
-            return new Result<string>(false, "", "troubles with AssignColor(), maybe deviceToken was missing");
+            ColorTest.IsAssigned(user.DeviceToken, configuration);
         }
         fingerprint.DeviceToken = user.DeviceToken;
         FingerprintService.Register(fingerprint, user, configuration);
