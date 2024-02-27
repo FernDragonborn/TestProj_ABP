@@ -18,7 +18,15 @@ export class FingerprintService {
     fingerprint)
     .pipe(
       map((response: { key: string, value: string }) => response.value)
-    );
+      );
+  }
+  public GetPriceViaFingerprint(): Observable<number>{
+    const fingerprint = this.getFingerprint();
+    return this.http.post<{ key: string, value: number }>(this.baseApiUrl + '/experiment/get-price-from-fingerprint',
+    fingerprint)
+    .pipe(
+      map((response: { key: string, value: number }) => response.value)
+      );
   }
 
   private getFingerprint(): BrowserFingerprintDto  {
